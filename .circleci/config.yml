@@ -1,0 +1,93 @@
+defaults: &defaults
+  working_directory: ~/repo
+  docker:
+    - image: circleci/ruby:2.5.1-node
+      environment:
+        - BUNDLE_JOBS: 3
+        - BUNDLE_RETRY: 3
+        - BUNDLE_PATH: vendor/bundle
+        - RAILS_ENV: test
+    - image: circleci/postgres:latest
+      environment:
+        - POSTGRES_USER: circleci
+
+version: 2
+jobs:
+  checkout_code:
+    <<: *defaults
+    steps:
+      - checkout
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - .
+
+  bundle_ruby:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run: gem install bundler
+      - restore-cache:
+          key: gems-{{ checksum "Gemfile.lock" }}
+      - run: bundle install
+      - save-cache:
+          key: gems-{{ checksum "Gemfile.lock" }}
+          paths:
+            - ~/repo/vendor/bundle
+      - persist_to_workspace:
+          root: ~/repo
+          paths:
+            - vendor/bundle
+
+  run_rspec:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run: gem install bundler
+      - run: bundle install
+      - run:
+          name: Wait for database
+          command: dockerize -wait tcp://localhost:5432 -timeout 1m
+      - run:
+          name: Copy database.yml
+          command: cp config/database.yml.circleci config/database.yml
+      - run:
+          name: Create DB
+          command: RAILS_ENV=test bundle exec rake db:create db:schema:load --trace
+      - run:
+          name: Run Rspec Tests
+          command: |
+            bundle exec rspec --profile 5 \
+                              --format RspecJunitFormatter \
+                              --out test_results/rspec.xml \
+                              --format progress \
+                              $(circleci tests glob "spec/**/*_spec.rb" | circleci tests split --split-by=timings)
+      - store_test_results:
+          path: test_results
+
+  run_audits:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - run: gem install bundler
+      - run: bundle install
+      - run: bundle exec bundle audit check --ignore CVE-2016-6316
+      - run: bundle exec brakeman -f plain -z
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - checkout_code
+      - bundle_ruby:
+          requires:
+            - checkout_code
+      - run_rspec:
+          requires:
+            - bundle_ruby
+      - run_audits:
+          requires:
+            - bundle_ruby
