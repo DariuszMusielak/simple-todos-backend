@@ -59,6 +59,9 @@ group :test do
   gem "shoulda-matchers", "~> 3.1"
   gem 'factory_bot_rails'
   gem "ffaker"
+  gem "brakeman", require: false
+  gem "bundler-audit", require: false
+  gem "rspec_junit_formatter"
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
