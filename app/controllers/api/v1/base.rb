@@ -8,6 +8,7 @@ module API
       formatter :json, Grape::Formatter::ActiveModelSerializers
 
 
+      mount API::V1::Todos::Base
 
       error_formatter :json, Grape::Formatter::ActiveModelSerializers
     end
