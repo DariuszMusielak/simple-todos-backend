@@ -62,6 +62,7 @@ group :test do
   gem "brakeman", require: false
   gem "bundler-audit", require: false
   gem "rspec_junit_formatter"
+  gem "timecop"
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
