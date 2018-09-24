@@ -14,7 +14,7 @@ module API
             body false
           else
             status :not_found
-            "Something went wrong"
+            "Record not found"
           end
         end
       end
