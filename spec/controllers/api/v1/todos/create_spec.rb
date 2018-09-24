@@ -7,7 +7,8 @@ require "rails_helper"
 describe API::V1::Todos::Create, type: :request do
   let(:endpoint) { "/api/v1/todos" }
   subject { post endpoint, params: params }
-  let(:mocked_date) { Time.local(2018, 9, 24, 8, 0, 0) }
+
+  let(:mocked_date) { Time.local(2018, 9, 24, 8, 0, 0).utc }
 
   before {  Timecop.freeze(mocked_date) }
   after {  Timecop.return }
@@ -17,7 +18,7 @@ describe API::V1::Todos::Create, type: :request do
       {
         "done" => false,
         "description" => "New todo",
-        "deadline" => Time.zone.now + 2.days,
+        "deadline" => mocked_date + 2.days,
       }
     end
 
@@ -27,8 +28,8 @@ describe API::V1::Todos::Create, type: :request do
         "done" => params["done"],
         "description" => params["description"],
         "deadline" => params["deadline"],
-        "created_at" => "2018-09-24T06:00:00.000Z",
-        "updated_at" => "2018-09-24T06:00:00.000Z",
+        "created_at" => mocked_date,
+        "updated_at" => mocked_date,
       }
     end
 

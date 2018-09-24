@@ -8,7 +8,7 @@ describe API::V1::Todos::Update, type: :request do
   subject { patch endpoint, params: params }
 
   let(:endpoint) { "/api/v1/todos/#{todo_id}" }
-  let(:mocked_date) { Time.local(2018, 9, 24, 8, 0, 0) }
+  let(:mocked_date) { Time.local(2018, 9, 24, 8, 0, 0).utc }
 
   let(:todo) { create(:todo, done: false, description: "old", deadline: Time.zone.now + 2.days) }
   let(:todo_id) { todo.id }
@@ -27,8 +27,8 @@ describe API::V1::Todos::Update, type: :request do
         "done" => params["done"],
         "description" => params["description"],
         "deadline" => params["deadline"],
-        "created_at" => "2018-09-24T06:00:00.000Z",
-        "updated_at" => "2018-09-24T06:00:00.000Z",
+        "created_at" => mocked_date,
+        "updated_at" => mocked_date,
       }
     end
 
